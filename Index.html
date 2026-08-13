@@ -1,1 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>JARVIS ONLINE</title>
 
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    min-height:100vh;
+    background:#03070b;
+    color:#dffaff;
+    font-family:Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.app{
+    width:100%;
+    max-width:500px;
+    min-height:100vh;
+    padding:25px 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+.logo{
+    margin-top:20px;
+    font-size:30px;
+    font-weight:bold;
+    letter-spacing:9px;
+    color:#69eaff;
+    text-shadow:0 0 15px #00cfff;
+}
+.status{
+    margin-top:8px;
+    color:#72ffb1;
+    font-size:13px;
+    letter-spacing:3px;
+}
+.core{
+    width:230px;
+    height:230px;
+    border-radius:50%;
+    margin-top:55px;
+    border:2px solid #54eaff;
+    box-shadow:
+      0 0 20px #00cfff,
+      0 0 60px #007c99,
+      inset 0 0 40px #00677d;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+    animation:pulse 2.5s infinite;
+}
+.core:before,.core:after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    border:1px solid #45dfff;
+}
+.core:before{width:175px;height:175px}
+.core:after{width:115px;height:115px}
+.arc{
+    position:absolute;
+    width:260px;
+    height:260px;
+    border:3px solid transparent;
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin 3s linear infinite;
+}
+.eye{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    background:#7df5ff;
+    box-shadow:0 0 35px #00eaff;
+    z-index:2;
+}
+.response{
+    width:100%;
+    min-height:100px;
+    margin-top:45px;
+    padding:18px;
+    border:1px solid #174b5b;
+    border-radius:15px;
+    background:#071118;
+    text-align:center;
+    font-size:16px;
+    line-height:1.6;
+}
+.controls{
+    width:100%;
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+input{
+    flex:1;
+    min-width:0;
+    padding:15px;
+    border-radius:12px;
+    border:1px solid #246071;
+    background:#071118;
+    color:white;
+    outline:none;
+}
+button{
+    border:0;
+    border-radius:12px;
+    padding:14px 18px;
+    background:#0b8ca8;
+    color:white;
+    font-weight:bold;
+}
+.mic{
+    width:210px;
+    margin-top:18px;
+    border-radius:30px;
+    background:#087f98;
+    box-shadow:0 0 20px #006d82;
+}
+.small{
+    margin-top:auto;
+    padding-top:25px;
+    color:#667d87;
+    font-size:11px;
+    text-align:center;
+}
+@keyframes pulse{
+  50%{transform:scale(1.04);box-shadow:0 0 35px #00cfff,0 0 90px #007c99,inset 0 0 55px #00677d}
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="logo">JARVIS</div>
+<div class="status">● ONLINE • READY</div>
+
+<div class="core">
+    <div class="arc"></div>
+    <div class="eye"></div>
+</div>
+
+<div class="response" id="response">
+    Good morning.<br>
+    I am JARVIS.<br>
+    <b>Awaiting your command.</b>
+</div>
+
+<div class="controls">
+    <input id="command" placeholder="Speak or type a command...">
+    <button onclick="sendCommand()">SEND</button>
+</div>
+
+<button class="mic" onclick="startListening()">🎙️ TALK TO JARVIS</button>
+
+<div class="small">
+    JARVIS ONLINE v1.0<br>
+    Voice • AI • Internet
+</div>
+
+</div>
+
+<script>
+const response = document.getElementById("response");
+const command = document.getElementById("command");
+
+function speak(text){
+    if("speechSynthesis" in window){
+        speechSynthesis.cancel();
+        const voice = new SpeechSynthesisUtterance(text);
+        voice.lang = "en-IN";
+        voice.rate = 0.95;
+        speechSynthesis.speak(voice);
+    }
+}
+
+function sendCommand(){
+    const text = command.value.trim();
+    if(!text) return;
+
+    response.innerHTML =
+        "<b>You:</b> " + escapeHTML(text) +
+        "<br><br>JARVIS: I received your command. My online AI brain will be connected in the next step.";
+
+    speak("I received your command. My online AI brain will be connected in the next step.");
+    command.value="";
+}
+
+function startListening(){
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if(!SpeechRecognition){
+        response.innerHTML =
+            "Voice recognition is not supported by this browser. Please use Chrome.";
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    response.innerHTML = "🎙️ Listening...";
+
+    recognition.onresult = function(event){
+        const text = event.results[0][0].transcript;
+        command.value = text;
+        sendCommand();
+    };
+
+    recognition.onerror = function(){
+        response.innerHTML = "I couldn't hear that. Please try again.";
+    };
+
+    recognition.start();
+}
+
+function escapeHTML(text){
+    return text.replace(/[&<>"']/g,function(m){
+        return ({
+            "&":"&amp;",
+            "<":"&lt;",
+            ">":"&gt;",
+            '"':"&quot;",
+            "'":"&#039;"
+        })[m];
+    });
+}
+
+command.addEventListener("keydown",function(e){
+    if(e.key==="Enter") sendCommand();
+});
+</script>
+
+</body>
+</html>
